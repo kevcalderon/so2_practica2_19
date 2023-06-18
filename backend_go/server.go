@@ -84,7 +84,8 @@ func getMemorySegments(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	folder := params["folder"]
 
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("cat /proc/%s/maps", folder))
+	command := fmt.Sprintf("cat /proc/%s/maps", folder)
+	cmd := exec.Command("sh", "-c", command)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println(err)
