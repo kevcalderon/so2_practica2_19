@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os/exec"
+	"strings"
+
+	"github.com/gorilla/mux"
 
 )
 
@@ -73,17 +76,21 @@ func handleCPURequest(w http.ResponseWriter, r *http.Request) {
 	// Devolver el valor de outputCpu
 	fmt.Fprintf(w, "%s", outputCpu)
 }
+
 func getMemorySegments(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	folder := params["folder"]
 
-	filePath := fmt.Sprintf("/proc/%s/maps", folder)
-
-	memorySegments, err := readMemorySegments(filePath)
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("cat /proc/%s/maps", folder))
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		http.Error(w, "Error al leer los segmentos de memoria", http.StatusInternalServerError)
+		fmt.Println(err)
+		http.Error(w, "Error al ejecutar el comando", http.StatusInternalServerError)
 		return
 	}
+
+	outputMaps := string(out[:])
+	memorySegments := parseMemorySegments(outputMaps)
 
 	jsonData, err := json.Marshal(memorySegments)
 	if err != nil {
@@ -95,13 +102,8 @@ func getMemorySegments(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func readMemorySegments(filePath string) ([]MemorySegment, error) {
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	lines := strings.Split(string(content), "\n")
+func parseMemorySegments(output string) []MemorySegment {
+	lines := strings.Split(output, "\n")
 	memorySegments := make([]MemorySegment, 0)
 
 	for _, line := range lines {
@@ -118,5 +120,5 @@ func readMemorySegments(filePath string) ([]MemorySegment, error) {
 		}
 	}
 
-	return memorySegments, nil
+	return memorySegments
 }
