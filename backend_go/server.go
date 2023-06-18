@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -36,7 +37,10 @@ func main() {
 	router.HandleFunc("/api/memoria/{folder}", getMemorySegments).Methods("GET")
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
-	http.ListenAndServe(":8080", router)
+	// Agregar el middleware CORS a todos los endpoints
+	handler := handlers.CORS(handlers.AllowedOrigins([]string{"*"}))(router)
+
+	http.ListenAndServe(":8080", handler)
 
 }
 
