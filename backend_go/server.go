@@ -24,6 +24,7 @@ type MemorySegment struct {
 	Size         int    `json:"size_kb"`
 	Permissions  string `json:"permissions"`
 	Device       string `json:"device,omitempty"`
+	FileName     string `json:"file_name,omitempty"`
 }
 
 
@@ -139,6 +140,11 @@ func readMemorySegments(filePath string) ([]MemorySegment, error) {
 				// Set Device field if applicable
 				if len(fields) >= 6 {
 					segment.Device = fields[5]
+				}
+
+				// Set FileName field if applicable
+				if len(fields) >= 6 {
+					segment.FileName = fields[5]
 				}
 
 				memorySegments = append(memorySegments, segment)
