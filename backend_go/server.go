@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-
 )
+
 
 type RAM struct {
 	TotalRam string `json:"totalram"`
@@ -23,12 +23,15 @@ type MemorySegment struct {
 
 
 func main() {
+	router := mux.NewRouter()
 
-	http.HandleFunc("/api/ram", handleRequest)
-	http.HandleFunc("/api/cpu", handleCPURequest)
+	router.HandleFunc("/api/ram", handleRequest).Methods("GET")
+	router.HandleFunc("/api/cpu", handleCPURequest).Methods("GET")
 	router.HandleFunc("/api/memoria/{folder}", getMemorySegments).Methods("GET")
+
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", router)
+
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
