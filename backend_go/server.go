@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os/exec"
 	"strings"
+	"io/ioutil"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -19,6 +21,7 @@ type RAM struct {
 type MemorySegment struct {
 	StartAddress string `json:"start_address"`
 	EndAddress   string `json:"end_address"`
+	Size         int    `json:"size_kb"`
 }
 
 
@@ -81,20 +84,15 @@ func handleCPURequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMemorySegments(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	folder := params["folder"]
+	vars := mux.Vars(r)
+	folder := vars["folder"]
 
-	command := fmt.Sprintf("cat /proc/%s/maps", folder)
-	cmd := exec.Command("sh", "-c", command)
-	out, err := cmd.CombinedOutput()
+	filePath := "/proc/" + folder + "/maps"
+	memorySegments, err := readMemorySegments(filePath)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Error al ejecutar el comando", http.StatusInternalServerError)
+		http.Error(w, "Error al leer los segmentos de memoria", http.StatusInternalServerError)
 		return
 	}
-
-	outputMaps := string(out[:])
-	memorySegments := parseMemorySegments(outputMaps)
 
 	jsonData, err := json.Marshal(memorySegments)
 	if err != nil {
@@ -106,8 +104,13 @@ func getMemorySegments(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func parseMemorySegments(output string) []MemorySegment {
-	lines := strings.Split(output, "\n")
+func readMemorySegments(filePath string) ([]MemorySegment, error) {
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(content), "\n")
 	memorySegments := make([]MemorySegment, 0)
 
 	for _, line := range lines {
@@ -115,14 +118,28 @@ func parseMemorySegments(output string) []MemorySegment {
 		if len(fields) >= 1 {
 			addressRange := strings.Split(fields[0], "-")
 			if len(addressRange) == 2 {
+				startAddress := addressRange[0]
+				endAddress := addressRange[1]
+
+				size := calculateSegmentSize(startAddress, endAddress)
+
 				segment := MemorySegment{
-					StartAddress: addressRange[0],
-					EndAddress:   addressRange[1],
+					StartAddress: startAddress,
+					EndAddress:   endAddress,
+					Size:         size,
 				}
 				memorySegments = append(memorySegments, segment)
 			}
 		}
 	}
 
-	return memorySegments
+	return memorySegments, nil
+}
+
+func calculateSegmentSize(startAddress, endAddress string) int {
+	start, _ := strconv.ParseUint(startAddress, 16, 64)
+	end, _ := strconv.ParseUint(endAddress, 16, 64)
+	size := (end - start) / 1024 // Convertir de bytes a kilobytes
+
+	return int(size)
 }
