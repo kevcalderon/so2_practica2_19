@@ -22,8 +22,8 @@ type MemorySegment struct {
 	StartAddress string `json:"start_address"`
 	EndAddress   string `json:"end_address"`
 	Size         int    `json:"size_kb"`
-	Permissions  string `json:"permisos"`
-	Device       string `json:"dispositivo"`
+	Permissions  string `json:"permissions"`
+	Device       string `json:"device,omitempty"`
 }
 
 
@@ -117,7 +117,7 @@ func readMemorySegments(filePath string) ([]MemorySegment, error) {
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		if len(fields) >= 5 {
+		if len(fields) >= 2 {
 			addressRange := strings.Split(fields[0], "-")
 			if len(addressRange) == 2 {
 				startAddress := addressRange[0]
@@ -125,16 +125,22 @@ func readMemorySegments(filePath string) ([]MemorySegment, error) {
 
 				size := calculateSegmentSize(startAddress, endAddress)
 
-				permissions := fields[1]
-				device := fields[5]
-
 				segment := MemorySegment{
 					StartAddress: startAddress,
 					EndAddress:   endAddress,
 					Size:         size,
-					Permissions:  permissions,
-					Device:       device,
 				}
+
+				// Set Permissions field
+				if len(fields) >= 5 {
+					segment.Permissions = fields[1]
+				}
+
+				// Set Device field if applicable
+				if len(fields) >= 6 {
+					segment.Device = fields[5]
+				}
+
 				memorySegments = append(memorySegments, segment)
 			}
 		}
