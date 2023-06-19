@@ -176,7 +176,6 @@ func handleKill(w http.ResponseWriter, r *http.Request) {
 
 	err := cmd.Run()
 	if err != nil {
-		log.Printf("Error al intentar matar el proceso: %v", err)
 		http.Error(w, "Error al matar el proceso", http.StatusInternalServerError)
 		return
 	}
