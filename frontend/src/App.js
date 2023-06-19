@@ -309,6 +309,14 @@ function App() {
               <br></br>
               <div>
                 <h5>
+                  MEMORIA CONSUMIDA %:{" "}
+                  <p>
+                    {100 -
+                      (parseInt(dataRam?.freeram) * 100) /
+                        parseInt(dataRam?.totalram)}
+                  </p>
+                </h5>
+                <h5>
                   Sleeping: <p>{countSleeping}</p>
                 </h5>
                 <h5>

@@ -17,6 +17,22 @@
 
 # MANUAL TECNICO
 * Descripción de la configuración de la Máquina virtual
+  Estas son las configuraciones que se realizaron para la creacion de maquina virtual asi como el usuario.
+  
+<p align="center">
+  <img src="https://github.com/kevcalderon/so2_practica2_19/blob/main/imgs/direccion.jpg" width="600">
+</p>
+<p align="center">
+  <img src="https://github.com/kevcalderon/so2_practica2_19/blob/main/imgs/conf.jpg" width="600">
+</p>
+<p align="center">
+  <img src="https://github.com/kevcalderon/so2_practica2_19/blob/main/imgs/grub.jpg" width="600">
+</p>
+<p align="center">
+  <img src="https://github.com/kevcalderon/so2_practica2_19/blob/main/imgs/users.jpg" width="600">
+</p>
+
+* Descripción de la configuración de la Máquina virtual
 <p align="center">
   <img src="https://github.com/kevcalderon/SO1_201902714/blob/master/Practica2/img/vms.png" width="600">
 </p>
@@ -42,8 +58,17 @@ Luego se instala la version grafica de gnome para hacer funcionarlo graficamente
 - sudo tar -xvf go1.20.4.linux-amd64.tar.gz -C /usr/local/
 - export PATH=$PATH:/usr/local/go/bin
 
-
-* Descripción de los cambios que fueron necesarios para el correcto funcionamiento de los módulos en la nueva distrubucion.
-
-
 # MANUAL DE USUARIO
+* El proyecto fue realizado con la tecnologia de react, con la finalidad de ser mas dinamico las funcionalidades.
+* En este se puede visualizar un poligono de frecuencia en el cual indica la ram consumida, asi como tambien los procesos del kernel
+* Cada proceso tiene una funcionalidad que es ver nodos hijos, eliminarlo y ver especificamente en otra pantalla el consumo de ese proceso.
+  
+<p align="center">
+  <img src="https://github.com/kevcalderon/so2_practica2_19/blob/main/imgs/front1.jpg" width="600">
+</p>
+<p align="center">
+  <img src="https://github.com/kevcalderon/so2_practica2_19/blob/main/imgs/front2.jpg" width="600">
+</p>
+<p align="center">
+  <img src="https://github.com/kevcalderon/so2_practica2_19/blob/main/imgs/front3.jpg" width="600">
+</p>
