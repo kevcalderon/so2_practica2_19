@@ -35,6 +35,7 @@ func main() {
 	router.HandleFunc("/api/ram", handleRequest).Methods("GET")
 	router.HandleFunc("/api/cpu", handleCPURequest).Methods("GET")
 	router.HandleFunc("/api/memoria/{folder}", getMemorySegments).Methods("GET")
+	router.HandleFunc("/api/kill/{id}", handleKill).Methods("GET")
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
 	// Agregar el middleware CORS a todos los endpoints
@@ -165,4 +166,20 @@ func calculateSegmentSize(startAddress, endAddress string) int {
 	size := (end - start) / 1024 // Convertir de bytes a kilobytes
 
 	return int(size)
+}
+
+func handleKill(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	processID := vars["id"]
+
+	cmd := exec.Command("kill", processID)
+
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Error al intentar matar el proceso: %v", err)
+		http.Error(w, "Error al matar el proceso", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "Proceso %s cerrado", processID)
 }
