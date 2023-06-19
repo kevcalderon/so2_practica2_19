@@ -172,7 +172,7 @@ func handleKill(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	processID := vars["id"]
 
-	cmd := exec.Command("kill", processID)
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("kill %s", processID))
 
 	err := cmd.Run()
 	if err != nil {
