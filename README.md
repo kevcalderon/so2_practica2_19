@@ -22,7 +22,27 @@
 </p>
 
 * Instrucciones de instalación de Arch Linux
+- pacstrap -K /mnt base linux linux-firmware
+- genfstab -U /mnt >> /mnt/etc/fstab
+- arch-chroot /mnt
+- ln -sf /usr/share/zoneinfo/Región/Ciudad /etc/localtime
+- hwclock --systohc
+- locale-gen
+- /etc/locale.conf
+- LANG=es_ES.UTF-8
+- passwd
+
+Luego se instala la version grafica de gnome para hacer funcionarlo graficamente
+
+
 * Instrucciones de instalación de los paquetes necesarios para el correcto funcionamiento de la aplicación.
+
+sudo pacman -S wget
+wget https://go.dev/dl/go1.20.4.linux-amd64.tar.gz
+sudo tar -xvf go1.20.4.linux-amd64.tar.gz -C /usr/local/
+export PATH=$PATH:/usr/local/go/bin
+
+
 * Descripción de los cambios que fueron necesarios para el correcto funcionamiento de los módulos en la nueva distrubucion.
 
 
