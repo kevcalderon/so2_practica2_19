@@ -32,9 +32,16 @@ type MemorySegment struct {
 func main() {
 	router := mux.NewRouter()
 
+	// Endpoint para obtener información de la RAM
 	router.HandleFunc("/api/ram", handleRequest).Methods("GET")
+
+	// Endpoint para obtener información de la CPU
 	router.HandleFunc("/api/cpu", handleCPURequest).Methods("GET")
+
+	// Endpoint para obtener los segmentos de memoria de una carpeta específica
 	router.HandleFunc("/api/memoria/{folder}", getMemorySegments).Methods("GET")
+
+	// Endpoint para matar un proceso por su ID
 	router.HandleFunc("/api/kill/{id}", handleKill).Methods("GET")
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
@@ -46,6 +53,7 @@ func main() {
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
+	// Ejecutar el comando para obtener la información de la RAM
 	cmd := exec.Command("sh", "-c", "cat /proc/ram_grupo19")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -73,6 +81,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCPURequest(w http.ResponseWriter, r *http.Request) {
+	// Ejecutar el comando para obtener la información de la CPU
 	cmd := exec.Command("sh", "-c", "cat /proc/cpu_grupo19")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -93,6 +102,7 @@ func handleCPURequest(w http.ResponseWriter, r *http.Request) {
 
 func getMemorySegments(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	// Obtener el parámetro de la URL para buscar informacion del proceso
 	folder := vars["folder"]
 
 	filePath := "/proc/" + folder + "/maps"
@@ -112,6 +122,7 @@ func getMemorySegments(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
+// readMemorySegments lee los segmentos de memoria desde el archivo maps y los devuelve como una lista de MemorySegment
 func readMemorySegments(filePath string) ([]MemorySegment, error) {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -160,6 +171,7 @@ func readMemorySegments(filePath string) ([]MemorySegment, error) {
 	return memorySegments, nil
 }
 
+// calculateSegmentSize calcula el tamaño de un segmento de memoria en kilobytes
 func calculateSegmentSize(startAddress, endAddress string) int {
 	start, _ := strconv.ParseUint(startAddress, 16, 64)
 	end, _ := strconv.ParseUint(endAddress, 16, 64)
@@ -172,6 +184,7 @@ func handleKill(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	processID := vars["id"]
 
+	// Ejecutar el comando "kill {processID}" para terminar el proceso	
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("kill %s", processID))
 
 	err := cmd.Run()
