@@ -32,10 +32,16 @@ type SystemMemory struct {
 	TotalRAM int `json:"total_ram_mb"`
 }
 
+type MemorySegment struct {
+	StartAddress string `json:"start_address"`
+	EndAddress   string `json:"end_address"`
+}
+
 type ProcessMemory struct {
 	ResidentMemory int `json:"resident_memory_mb"`
 	VirtualMemory  int `json:"virtual_memory_mb"`
 	RAMPercentage  float64 `json:"ram_percentage"`
+	MemorySegments []MemorySegment  `json:"memory_segments"`
 }
 
 
@@ -230,6 +236,8 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 	lines := strings.Split(string(content), "\n")
 	residentMemoryBytes := 0
 	virtualMemoryBytes := 0
+	var memorySegments []MemorySegment
+	var currentSegment MemorySegment
 
 	for _, line := range lines {
 		if strings.HasPrefix(line, "Rss:") {
@@ -254,6 +262,21 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 				}
 				virtualMemoryBytes += memorySizeBytes
 			}
+		} else if strings.HasPrefix(line, "Start:") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				startAddress := fields[1]
+				currentSegment = MemorySegment{
+					StartAddress: startAddress,
+				}
+			}
+		} else if strings.HasPrefix(line, "End:") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				endAddress := fields[1]
+				currentSegment.EndAddress = endAddress
+				memorySegments = append(memorySegments, currentSegment)
+			}
 		}
 	}
 
@@ -262,9 +285,10 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 	ramPercentage := float64(residentMemoryMB) / float64(systemMemory.TotalRAM) * 100
 
 	processMemory := ProcessMemory{
-		ResidentMemory: residentMemoryMB,
-		VirtualMemory:  virtualMemoryMB,
-		RAMPercentage:  ramPercentage,
+		ResidentMemory:  residentMemoryMB,
+		VirtualMemory:   virtualMemoryMB,
+		RAMPercentage:   ramPercentage,
+		MemorySegments:  memorySegments,
 	}
 
 	jsonData, err := json.Marshal(processMemory)
