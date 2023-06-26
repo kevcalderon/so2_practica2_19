@@ -28,6 +28,10 @@ type MemorySegment struct {
 	FileName     string `json:"file_name,omitempty"`
 }
 
+type ProcessMemory struct {
+	ResidentMemory int `json:"resident_memory_mb"`
+}
+
 
 func main() {
 	router := mux.NewRouter()
@@ -43,6 +47,8 @@ func main() {
 
 	// Endpoint para matar un proceso por su ID
 	router.HandleFunc("/api/kill/{id}", handleKill).Methods("GET")
+
+	router.HandleFunc("/api/memoryprocess/{id}", getProcessMemory).Methods("GET")
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
 	// Agregar el middleware CORS a todos los endpoints
@@ -194,4 +200,50 @@ func handleKill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Proceso %s cerrado", processID)
+}
+
+func getProcessMemory(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	processID := vars["id"]
+
+	filePath := fmt.Sprintf("/proc/%s/smaps", processID)
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Error al leer el archivo smaps", http.StatusInternalServerError)
+		return
+	}
+
+	lines := strings.Split(string(content), "\n")
+	residentMemoryBytes := 0
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "Rss:") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				memorySizeBytes, err := strconv.Atoi(fields[1])
+				if err != nil {
+					fmt.Println(err)
+					http.Error(w, "Error al convertir el tamaño de la memoria residente", http.StatusInternalServerError)
+					return
+				}
+				residentMemoryBytes += memorySizeBytes
+			}
+		}
+	}
+
+	residentMemoryMB := residentMemoryBytes / 1024
+
+	processMemory := ProcessMemory{
+		ResidentMemory: residentMemoryMB,
+	}
+
+	jsonData, err := json.Marshal(processMemory)
+	if err != nil {
+		http.Error(w, "Error al convertir el resultado a JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
 }
