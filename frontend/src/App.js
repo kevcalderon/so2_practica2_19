@@ -9,9 +9,10 @@ import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
+import axios from "axios";
 
 function App() {
-  const API_URL = "http://34.125.243.189:8080";
+  const API_URL = "https://1f13-190-104-121-248.ngrok.io";
   const [dataRam, setDataRam] = useState();
   const [dataCpu, setDataCpu] = useState();
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ function App() {
   const [countStopped, setCountStopped] = useState(0);
   const [valuePid, setValuePid] = useState("");
   const [dataEspecific, setDataEspecific] = useState([]);
+  const [total, setTotal] = useState(0);
 
   const [mem, setMem] = useState([]);
 
@@ -40,14 +42,19 @@ function App() {
         data.data.forEach((element) => {
           if (element.state === 1) {
             setCountSleeping((prevCount) => prevCount + 1);
+            setTotal((prevCount) => prevCount + 1);
           } else if (element.state === 1026) {
             setCountSleeping((prevCount) => prevCount + 1);
+            setTotal((prevCount) => prevCount + 1);
           } else if (element.state === 0) {
             setCountRunning((prevCount) => prevCount + 1);
+            setTotal((prevCount) => prevCount + 1);
           } else if (element.state === 4) {
             setCountZombie((prevCount) => prevCount + 1);
+            setTotal((prevCount) => prevCount + 1);
           } else if (element.state === 8) {
             setCountStopped((prevCount) => prevCount + 1);
+            setTotal((prevCount) => prevCount + 1);
           }
         });
 
@@ -170,14 +177,11 @@ function App() {
   };
 
   const killProcess = async (pid) => {
-    fetch(`/processes/${pid}`, {
-      method: "DELETE",
-    })
+    axios
+      .get(`${API_URL}/api/kill/${pid}`)
       .then((response) => {
-        if (response.ok) {
-          console.log(`Proceso ${pid} terminado`);
-        } else {
-          console.error("Error al matar el proceso:", response.status);
+        if (response.status === 200) {
+          console.log(response.data);
         }
       })
       .catch((error) => {
@@ -188,22 +192,44 @@ function App() {
   const viewProcess = async (pid, value) => {
     setVistaEspecifica(true);
     setValuePid(value);
-    await fetch(`${API_URL}/api/memoria/${pid}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setDataEspecific(data);
-      })
-      .catch((err) => console.log(err));
+
+    axios.get(`${API_URL}/api/memoria/${pid}`).then((response) => {
+      if (response.status === 200) {
+        console.log(response.data);
+        setDataEspecific(response.data);
+      } else {
+      }
+    });
+    // await fetch(`${API_URL}/api/memoria/${pid}`)
+    //   .then((data) => {
+    //     console.log(data);
+
+    //
+    //   })
+    //   .catch((err) => console.log(err));
   };
 
   useEffect(() => {
     if (vistaEspecifica === false) {
+      setCountRunning(0);
+      setCountSleeping(0);
+      setCountStopped(0);
+      setCountZombie(0);
+      setTotal(0);
+
       const interval = setInterval(() => {
         getData();
+      }, 20000);
+
+      const interval2 = setInterval(() => {
+        getData();
         getMemory();
-        setLoading(true);
-      }, 3000);
-      return () => clearInterval(interval);
+      }, 5000);
+      setLoading(true);
+      return () => {
+        clearInterval(interval);
+        clearInterval(interval2);
+      };
     }
   }, []);
 
@@ -227,41 +253,49 @@ function App() {
                 Regresa a vista general
               </Button>
               <br></br>
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <td>Start Address</td>
-                    <td>End Address</td>
-                    <td>Size KB</td>
-                    <td>Permissions</td>
-                    <td>Device</td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dataEspecific.map((process, index) => {
-                    return (
-                      <tr key={process.index}>
-                        <td>{process.start_address}</td>
-                        <td>{process.end_address}</td>
-                        <td>{process.size_kb}</td>
-                        <td>
-                          {process.permissions.includes("r") &&
-                          process.permissions.includes("w")
-                            ? `lectura y escritura (${process.permissions})`
-                            : process.permissions.includes("r")
-                            ? `lectura (${process.permissions})`
-                            : process.permissions.includes("w")
-                            ? `escritura (${process.permissions})`
-                            : process.permissions.includes("x")
-                            ? `ejecucion (${process.permissions})`
-                            : `${process.permissions}`}
-                        </td>
-                        <td>{process.device}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
+              {dataEspecific.length === 0 ? (
+                "No hay informacion :("
+              ) : (
+                <Table striped bordered hover>
+                  <thead>
+                    <tr>
+                      <td>Start Address</td>
+                      <td>End Address</td>
+                      <td>Size KB</td>
+                      <td>Permissions</td>
+                      <td>Device</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dataEspecific.map((process, index) => {
+                      return (
+                        <tr key={process.index}>
+                          <td>{process.start_address}</td>
+                          <td>{process.end_address}</td>
+                          <td>{process.size_kb}</td>
+                          <td>
+                            {process.permissions.includes("r")
+                              ? ` lectura -`
+                              : " "}
+
+                            {process.permissions.includes("w")
+                              ? ` escritura -`
+                              : " "}
+                            {process.permissions.includes("x")
+                              ? ` ejecucion - `
+                              : " "}
+                            {process.permissions.includes("p")
+                              ? ` private -`
+                              : " "}
+                            {` (${process.permissions}) `}
+                          </td>
+                          <td>{process.device}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
+              )}
             </div>
           ) : (
             <Col>
@@ -270,14 +304,18 @@ function App() {
                 <h3>Poligono de frecuencia</h3>
                 <FrecuenciaChart data={data} />
               </div>
-              <div style={{ height: "350px", width: "350px" }}>
-                <h3>Porcentaje de Ram</h3>
-                <Pie data={data2} options={optionsPie} />
-              </div>
               <br></br>
               <br></br>
               <br></br>
               <div>
+                <h5>
+                  MEMORIA CONSUMIDA %:{" "}
+                  <p>
+                    {100 -
+                      (parseInt(dataRam?.freeram) * 100) /
+                        parseInt(dataRam?.totalram)}
+                  </p>
+                </h5>
                 <h5>
                   Sleeping: <p>{countSleeping}</p>
                 </h5>
@@ -289,6 +327,9 @@ function App() {
                 </h5>
                 <h5>
                   Zombie: <p>{countZombie}</p>
+                </h5>
+                <h5>
+                  TOTAL PROCESOS: <p>{total}</p>
                 </h5>
               </div>
               <Table striped bordered hover>
