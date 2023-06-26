@@ -28,8 +28,14 @@ type MemorySegment struct {
 	FileName     string `json:"file_name,omitempty"`
 }
 
+type SystemMemory struct {
+	TotalRAM int `json:"total_ram_mb"`
+}
+
 type ProcessMemory struct {
 	ResidentMemory int `json:"resident_memory_mb"`
+	VirtualMemory  int `json:"virtual_memory_mb"`
+	RAMPercentage  float64 `json:"ram_percentage"`
 }
 
 
@@ -206,6 +212,13 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	processID := vars["id"]
 
+	systemMemory, err := getSystemMemory()
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Error al obtener el total de memoria RAM del sistema", http.StatusInternalServerError)
+		return
+	}
+
 	filePath := fmt.Sprintf("/proc/%s/smaps", processID)
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -216,6 +229,7 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 
 	lines := strings.Split(string(content), "\n")
 	residentMemoryBytes := 0
+	virtualMemoryBytes := 0
 
 	for _, line := range lines {
 		if strings.HasPrefix(line, "Rss:") {
@@ -229,13 +243,28 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 				}
 				residentMemoryBytes += memorySizeBytes
 			}
+		} else if strings.HasPrefix(line, "Size:") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				memorySizeBytes, err := strconv.Atoi(fields[1])
+				if err != nil {
+					fmt.Println(err)
+					http.Error(w, "Error al convertir el tamaño de la memoria virtual", http.StatusInternalServerError)
+					return
+				}
+				virtualMemoryBytes += memorySizeBytes
+			}
 		}
 	}
 
 	residentMemoryMB := residentMemoryBytes / 1024
+	virtualMemoryMB := virtualMemoryBytes / 1024
+	ramPercentage := float64(residentMemoryMB) / float64(systemMemory.TotalRAM) * 100
 
 	processMemory := ProcessMemory{
 		ResidentMemory: residentMemoryMB,
+		VirtualMemory:  virtualMemoryMB,
+		RAMPercentage:  ramPercentage,
 	}
 
 	jsonData, err := json.Marshal(processMemory)
@@ -246,4 +275,23 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
+}
+
+func getSystemMemory() (SystemMemory, error) {
+	cmd := exec.Command("sh", "-c", "free -m | awk 'NR==2{print $2}'")
+	out, err := cmd.Output()
+	if err != nil {
+		return SystemMemory{}, err
+	}
+
+	totalRAM, err := strconv.Atoi(strings.TrimSpace(string(out)))
+	if err != nil {
+		return SystemMemory{}, err
+	}
+
+	systemMemory := SystemMemory{
+		TotalRAM: totalRAM,
+	}
+
+	return systemMemory, nil
 }
