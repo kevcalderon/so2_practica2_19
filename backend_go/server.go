@@ -32,7 +32,7 @@ type SystemMemory struct {
 	TotalRAM int `json:"total_ram_mb"`
 }
 
-type MemorySegment struct {
+type MemorySegment2 struct {
 	StartAddress string `json:"start_address"`
 	EndAddress   string `json:"end_address"`
 }
@@ -41,7 +41,7 @@ type ProcessMemory struct {
 	ResidentMemory int `json:"resident_memory_mb"`
 	VirtualMemory  int `json:"virtual_memory_mb"`
 	RAMPercentage  float64 `json:"ram_percentage"`
-	MemorySegments []MemorySegment  `json:"memory_segments"`
+	MemorySegments []MemorySegment2  `json:"memory_segments"`
 }
 
 
@@ -236,8 +236,8 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 	lines := strings.Split(string(content), "\n")
 	residentMemoryBytes := 0
 	virtualMemoryBytes := 0
-	var memorySegments []MemorySegment
-	var currentSegment MemorySegment
+	var memorySegments []MemorySegment2
+	var currentSegment MemorySegment2
 
 	for _, line := range lines {
 		if strings.HasPrefix(line, "Rss:") {
@@ -266,7 +266,7 @@ func getProcessMemory(w http.ResponseWriter, r *http.Request) {
 			fields := strings.Fields(line)
 			if len(fields) >= 2 {
 				startAddress := fields[1]
-				currentSegment = MemorySegment{
+				currentSegment = MemorySegment2{
 					StartAddress: startAddress,
 				}
 			}
