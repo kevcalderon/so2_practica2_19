@@ -12,7 +12,9 @@ import Popover from "react-bootstrap/Popover";
 import axios from "axios";
 
 function App() {
-  const API_URL = "https://1f13-190-104-121-248.ngrok.io";
+  // const API_URL = "https://49f4-190-104-121-248.ngrok.io";
+  const API_URL = "http://34.125.243.189:8080";
+
   const [dataRam, setDataRam] = useState();
   const [dataCpu, setDataCpu] = useState();
   const [loading, setLoading] = useState(false);
@@ -24,6 +26,7 @@ function App() {
   const [countStopped, setCountStopped] = useState(0);
   const [valuePid, setValuePid] = useState("");
   const [dataEspecific, setDataEspecific] = useState([]);
+  const [dataEspecific2, setDataEspecific2] = useState([]);
   const [total, setTotal] = useState(0);
 
   const [mem, setMem] = useState([]);
@@ -195,11 +198,18 @@ function App() {
 
     axios.get(`${API_URL}/api/memoria/${pid}`).then((response) => {
       if (response.status === 200) {
-        console.log(response.data);
+        console.log("ESPECIFIC", response.data);
         setDataEspecific(response.data);
-      } else {
       }
     });
+
+    axios.get(`${API_URL}/api/memoryprocess/${pid}`).then((response) => {
+      if (response.status === 200) {
+        console.log("ESPECIFIC2", response.data);
+        setDataEspecific2(response.data);
+      }
+    });
+
     // await fetch(`${API_URL}/api/memoria/${pid}`)
     //   .then((data) => {
     //     console.log(data);
@@ -256,45 +266,119 @@ function App() {
               {dataEspecific.length === 0 ? (
                 "No hay informacion :("
               ) : (
-                <Table striped bordered hover>
-                  <thead>
-                    <tr>
-                      <td>Start Address</td>
-                      <td>End Address</td>
-                      <td>Size KB</td>
-                      <td>Permissions</td>
-                      <td>Device</td>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dataEspecific.map((process, index) => {
-                      return (
-                        <tr key={process.index}>
-                          <td>{process.start_address}</td>
-                          <td>{process.end_address}</td>
-                          <td>{process.size_kb}</td>
-                          <td>
-                            {process.permissions.includes("r")
-                              ? ` lectura -`
-                              : " "}
+                <div>
+                  <br></br>
+                  <div style={{ display: "flex" }}>
+                    {/* tabla 1 */}
+                    <div>
+                      <div
+                        style={{
+                          width: "350px",
+                          height: "100px",
+                          border: "1px solid black",
+                        }}
+                      >
+                        {`memoria residente:  ${dataEspecific2.resident_memory_mb} mb`}
+                      </div>
+                      <div
+                        style={{
+                          width: "350px",
+                          height: "100px",
+                          border: "1px solid black",
+                          margin: "1% 0% 1% 0%",
+                        }}
+                      >{`memoria virtual:  ${dataEspecific2.virtual_memory_mb} mb`}</div>
+                      <div
+                        style={{
+                          width: "350px",
+                          height: "100px",
+                          border: "1px solid black",
+                        }}
+                      >{`% de consumo:  ${dataEspecific2.ram_percentage} %`}</div>
+                    </div>
+                    {/* tabla2 */}
 
-                            {process.permissions.includes("w")
-                              ? ` escritura -`
-                              : " "}
-                            {process.permissions.includes("x")
-                              ? ` ejecucion - `
-                              : " "}
-                            {process.permissions.includes("p")
-                              ? ` private -`
-                              : " "}
-                            {` (${process.permissions}) `}
-                          </td>
-                          <td>{process.device}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </Table>
+                    <div style={{ marginLeft: "10%" }}>
+                      <p>Mapa de memoria</p>
+                      <div
+                        style={{
+                          width: "350px",
+                          height: "100px",
+                          border: "1px solid black",
+                        }}
+                      >{`Inicio: ${dataEspecific[0].start_address}`}</div>
+                      <div
+                        style={{
+                          width: "350px",
+                          height: "100px",
+                          border: "1px solid black",
+                        }}
+                      >{`VmRSS: ${dataEspecific2.resident_memory_mb}`}</div>
+                      <div
+                        style={{
+                          width: "350px",
+                          height: "100px",
+                          border: "1px solid black",
+                        }}
+                      >{`VmSize: ${dataEspecific2.virtual_memory_mb}`}</div>
+                      <div
+                        style={{
+                          width: "350px",
+                          height: "100px",
+                          border: "1px solid black",
+                        }}
+                      >{`Fin: ${
+                        dataEspecific[dataEspecific.length - 1].end_address
+                      }`}</div>
+                    </div>
+                  </div>
+                  <br></br>
+                  <Table striped bordered hover>
+                    <thead>
+                      <tr>
+                        <td>Start Address</td>
+                        <td>End Address</td>
+                        <td>Size KB</td>
+                        <td>Permissions</td>
+                        <td>Device</td>
+                        <td>Filename</td>
+                        <td>RSS</td>
+                        <td>Size</td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dataEspecific.map((process, index) => {
+                        return (
+                          <tr key={process.index}>
+                            <td>{process.start_address}</td>
+                            <td>{process.end_address}</td>
+                            <td>{process.size_kb}</td>
+                            <td>
+                              {process.permissions.includes("r")
+                                ? ` lectura -`
+                                : " "}
+
+                              {process.permissions.includes("w")
+                                ? ` escritura -`
+                                : " "}
+                              {process.permissions.includes("x")
+                                ? ` ejecucion - `
+                                : " "}
+                              {process.permissions.includes("p")
+                                ? ` private -`
+                                : " "}
+                              {` (${process.permissions}) `}
+                            </td>
+                            <td>{process.device}</td>
+                            <td>{process.file_name}</td>
+                            <td>{dataEspecific2.resident_memory_mb}</td>
+                            <td>{dataEspecific2.virtual_memory_mb}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
               )}
             </div>
           ) : (
