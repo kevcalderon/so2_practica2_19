@@ -37,6 +37,13 @@
   <img src="https://github.com/kevcalderon/SO1_201902714/blob/master/Practica2/img/vms.png" width="600">
 </p>
 
+## /proc/[pid]/maps
+Este archivo muestra los rangos de memoria virtual asignados a un proceso específico, junto con los permisos de acceso y la ubicación de los archivos mapeados en esos rangos. Cada línea del archivo representa un rango de memoria y contiene información como dirección inicial, dirección final, permisos y desplazamiento en disco.
+
+## /proc/[pid]/smaps
+Este archivo proporciona información más detallada sobre el uso de memoria de un proceso en particular. Contiene estadísticas sobre diferentes regiones de memoria, como tamaño, dirección, permisos, uso compartido, bibliotecas cargadas, información de archivo asociada y consumo de memoria física.
+
+Ambos archivos son útiles para realizar análisis y depuración de problemas relacionados con la memoria en Linux. Pueden ayudarte a identificar fugas de memoria, analizar el uso de la memoria por parte de un proceso específico y comprender cómo se está asignando y utilizando la memoria en general en el sistema.
 
 # Comandos de configuracion para ArchLinux
 
