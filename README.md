@@ -37,26 +37,112 @@
   <img src="https://github.com/kevcalderon/SO1_201902714/blob/master/Practica2/img/vms.png" width="600">
 </p>
 
-* Instrucciones de instalación de Arch Linux
-- pacstrap -K /mnt base linux linux-firmware
-- genfstab -U /mnt >> /mnt/etc/fstab
-- arch-chroot /mnt
-- ln -sf /usr/share/zoneinfo/Región/Ciudad /etc/localtime
-- hwclock --systohc
-- locale-gen
-- /etc/locale.conf
-- LANG=es_ES.UTF-8
-- passwd
 
-Luego se instala la version grafica de gnome para hacer funcionarlo graficamente
+# Comandos de configuracion para ArchLinux
+
+    fdisk -l
+
+    ls /sys/firmware/efi/efivars
+
+    fdisk /dev/sda
+
+## Crear nueva particion
+    n                               
+    default
+    default
+    2048
+    4G
+
+## Crear nueva particion
+    n                               
+    default
+    default
+    default
+    default
+
+## Guardar la configuracion
+    w                               
 
 
-* Instrucciones de instalación de los paquetes necesarios para el correcto funcionamiento de la aplicación.
+## formatear la particion
+    mkswap /dev/sda1                
+    mkfs.ext4 /dev/sda2
 
-- sudo pacman -S wget
-- wget https://go.dev/dl/go1.20.4.linux-amd64.tar.gz
-- sudo tar -xvf go1.20.4.linux-amd64.tar.gz -C /usr/local/
-- export PATH=$PATH:/usr/local/go/bin
+    mount /dev/sda2 /mnt
+    swapon /dev/sda1
+
+## descargar los paquetes
+    pacstrap /mnt base base-devel
+
+    genfstab -U /mnt >> /mnt/etc/fstab
+    arch-chroot /mnt
+
+## configurar reloj
+    ln -sf /usr/share/zoneinfo/Mexico/BajaSur /etc/localtime
+
+## instalar nano
+    pacman -S nano                  
+
+## agregar al final del archivo las lineas
+    nano /etc/pacman.conf           
+        [kernel-lts]
+        Server = https://repo.m2x.dev/current/$repo/$arch
+
+## se agrega la llave
+    pacman-key --recv-keys 76C6E477042BFE985CC2209C08A255442FAFF0  
+    pacman-key --finger 76C6E477042BFE985CC2209C08A255442FAFF0
+    pacman-key --lsign-key 76C6E477042BFE985CC2209C08A255442FAFF0
+
+## Se instalan los headers
+    pacman -Syu linux-lts54 linux-lts54-headers     
+        default
+
+
+## configuracion del grub
+    pacman -S grub
+    grub-install /dev/sda
+    grub-mkconfig -o /boot/grub/grub.cfg
+
+
+## se editan los lenguajes que se necesiten
+    nano /etc/locale.get
+    locale-gen
+    echo LANG=en_US.UTF-8 > /etc/locale.conf
+    export LANG=en_US.UTF-8
+    echo myarch > /etc/hostname
+
+## Se configura la red
+    touch /etc/hosts    
+    nano /etc/hosts
+
+        127.0.0.1   localhost
+        ::1         localhost
+        127.0.1.1   myarch
+
+## Se configuran los usuarios
+    passwd
+    pacman -S sudo
+    useradd -m so2_Ejemplo
+    passwd so2_Ejemplo 
+    usermod -aG wheel,audio,video,storage so2_Ejemplo
+
+
+    pacman -S xorg networkmanager
+        default
+
+## instalacion de interfaz grafica
+    pacman -S gnome     
+        default
+        default
+
+    systemctl enable gdm.service
+    umount /mnt
+
+## instalacion de Golang
+    sudo pacman -S wget
+    wget https://go.dev/dl/go1.20.4.linux-amd64.tar.gz
+    sudo tar -xvf go1.20.4.linux-amd64.tar.gz -C /usr/local/
+    export PATH=$PATH:/usr/local/go/bin
 
 # MANUAL DE USUARIO
 * El proyecto fue realizado con la tecnologia de react, con la finalidad de ser mas dinamico las funcionalidades.
